@@ -11,6 +11,9 @@ const App = () => {
     const data = localStorage.getItem('savedData');
     const localData = data ? data.split('%%').map((item, index) => ({ id: index, title: item })) : [];
     const dataComponents = localData.map(item => {
+      if (item.title === '') {
+        return null;
+      }
       let busName;
       let rotaName;
       if (item.title.includes('+')) {
@@ -22,7 +25,6 @@ const App = () => {
       }
       return <MapComponent id={item.id} code={busName[0]} rota={rotaName} />;
     });
-
 
     return (
       <>
