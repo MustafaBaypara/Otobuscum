@@ -12,6 +12,7 @@ const MapComponent = (props) => {
   const [location, setLocation] = useState([[0, 0]]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   var timeCounter = 0;
+  var stationCounter = 0;
 
   const HeaderMap = () => {
   if (props.rota == 0) {
@@ -126,9 +127,12 @@ const MapComponent = (props) => {
       }
       let result = await response.json();
       if (result.length === 0 || result["direct" + 0] === "Gidiş Yönü") {
+        stationCounter += 5000;
+        await wait(5000 + stationCounter);
         stationFunc();
         return;
       }
+      stationCounter = 0;
       result = JSON.stringify(result);
       result = result.replace(/-/g, ">");
       result = JSON.parse(result);
