@@ -174,7 +174,7 @@ const MapComponent = (props) => {
   };
 
   const MapEventHandler = ({ onMoveEnd }) => {
-    useMapEvent('zoomstart', onMoveEnd);
+    useMapEvent('movestart', onMoveEnd);
     return null;
   };
 

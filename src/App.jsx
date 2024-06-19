@@ -31,6 +31,9 @@ const App = () => {
       <InputComponent />
       <div className='mainMap'>
         {dataComponents}
+      <a href="https://github.com/MustafaBaypara/Otobuscum" target="_blank" rel="noopener noreferrer">
+      <img style={{marginTop: "5%"}} align="center" src="https://github-readme-stats.vercel.app/api/pin/?username=mustafabaypara&repo=otobuscum&show_owner=true&bg_color=151515&text_color=9f9f9f&icon_color=fff&title_color=fff" />
+      </a>
       </div>
       <style>
       @import url('https://fonts.googleapis.com/css2?family=Russo+One&display=swap')
