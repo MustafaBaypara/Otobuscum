@@ -13,6 +13,7 @@ const MapComponent = (props) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   var timeCounter = 0;
   var stationCounter = 2000;
+  var polylineCounter = 2000;
 
   const HeaderMap = () => {
   if (props.rota == 0) {
@@ -100,6 +101,9 @@ const MapComponent = (props) => {
       }
       const result = await response.json();
       if (result.length === 0) {
+        polylineCounter *= 2;
+        await wait(1000 + polylineCounter);
+        polylinePositions();
         return;
       }
       let resultArray = [];
