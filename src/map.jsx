@@ -1,19 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Tooltip} from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap, useMapEvent} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import BusData from './AboutBus';
 import { goldIcon, redIcon, busIcon, blackIcon} from './markers';
 
 const MapComponent = (props) => {
   const [busData, setBusData] = useState([]);
-  const [ortData, setOrtData] = useState([]);
   const [stationData, setstationData] = useState([]);
   const [busCoor, setBusCoor] = useState([[0, 0]]);
   const [location, setLocation] = useState([[0, 0]]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [lockMap, setLockMap] = useState(false);
   var timeCounter = 0;
   var stationCounter = 2000;
   var polylineCounter = 2000;
+
 
   const HeaderMap = () => {
   if (props.rota == 0) {
@@ -153,17 +154,6 @@ const MapComponent = (props) => {
     }, []);
 
   useEffect(() => {
-    let ortalamaListe = [];
-    if (busData.length > 0) {
-      for (let i = 0; i < busData.length; i++) {
-        const ortalama = busData.reduce((acc, cur) => acc + cur[i], 0) / busData.length;
-        ortalamaListe.push(ortalama);
-      }
-    }
-    setOrtData(ortalamaListe);
-  }, [busData]);
-
-  useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const latitude = position.coords.latitude;
@@ -183,7 +173,23 @@ const MapComponent = (props) => {
     setTimeout(() => setIsButtonDisabled(false), 3000);
   };
 
-  if (busData.length === 0 || ortData.length === 0) {
+  const MapEventHandler = ({ onMoveEnd }) => {
+    useMapEvent('zoomstart', onMoveEnd);
+    return null;
+  };
+
+  const FitBounds = ({ bounds , lock}) => {
+    if (!lock){
+    const map = useMap();
+    map.fitBounds(bounds);}
+    return null;
+  };
+
+  const handleMoveEnd = () => {
+    setLockMap(true);
+  };
+
+  if (busData.length === 0 ) {
     return (
       <div className='mapClass' id={props.id}>
       <h2>{HeaderMap()}</h2>
@@ -191,7 +197,7 @@ const MapComponent = (props) => {
       <div className="overlay-text">
         <p>Otobüs Çevrimdışı</p>
       </div>
-        <MapContainer center={busData[0]} zoom={13} style={{ height: "400px", width: "400px"}} attributionControl={false}>
+        <MapContainer style={{ height: "400px", width: "400px"}} attributionControl={false}>
           <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
           <Marker position={busData[0]}></Marker>
       </MapContainer>
@@ -210,7 +216,7 @@ const MapComponent = (props) => {
     <div className='mapClass' id={props.id}>
     <h2>{HeaderMap()}</h2>
     <h3>{stationData}</h3>
-      <MapContainer center={(location[0] !== 0 || location[1] !== 0) ? location : busData[0]} zoom={13} style={{ height: "400px", width: "400px"}} attributionControl={false}>
+      <MapContainer style={{ height: "400px", width: "400px"}} attributionControl={false}>
         <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
         <Marker position={busData[0]} icon={busIcon}></Marker>
         <Polyline positions={busCoor} color="black" op  weight={3} opacity={0.7} dashArray="2, 5" lineCap="round"/>
@@ -229,6 +235,8 @@ const MapComponent = (props) => {
         <p style={{ color: '#cd3951', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #aa253b, -1px 1px 0 #aa253b"}}>Bitiş</p>
         </Tooltip>
         </Marker>
+        <MapEventHandler onMoveEnd={handleMoveEnd} />
+        <FitBounds bounds={[busCoor[0], busCoor[busCoor.length - 1]]} lock={lockMap}/>
     </MapContainer>
     <div className='mapButtons'>
     <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
@@ -244,7 +252,7 @@ const MapComponent = (props) => {
     <div className='mapClass' id={props.id}>
     <h2>{HeaderMap()}</h2>
     <h3>{stationData}</h3>
-    <MapContainer center={(location[0] !== 0 || location[1] !== 0) ? location : [ortData[0], ortData[1]]} zoom={13} style={{ height: "400px", width: "400px", zIndex: "0"}} attributionControl={false}>
+    <MapContainer style={{ height: "400px", width: "400px", zIndex: "0"}} attributionControl={false}>
       <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
       {busData.map((position, index) => (
         <Marker key={index} position={position} icon={busIcon}></Marker>
@@ -265,6 +273,8 @@ const MapComponent = (props) => {
             </Tooltip>
         </Marker>
       <Polyline positions={busCoor} color="black" op  weight={3} opacity={0.7} dashArray="2, 5" lineCap="round"/>
+      <MapEventHandler onMoveEnd={handleMoveEnd} />
+      <FitBounds bounds={[busCoor[0], busCoor[busCoor.length - 1]]} lock={lockMap}/>
     </MapContainer>
 
     <div className='mapButtons'>
