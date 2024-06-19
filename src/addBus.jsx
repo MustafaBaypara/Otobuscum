@@ -38,8 +38,10 @@ const InputComponent = () => {
     <div className='inputDiv'>
         <h1>Otobüs ekle!</h1>
         <input type="text" value={inputValue} onChange={handleChange} placeholder='Hat Giriniz.'/>
-        <button onClick={() => handleClick('gidiş')}>Gidiş</button>
-        <button onClick={() => handleClick('dönüş')}>Dönüş</button>
+        <div style={{gap: "15px", display: "flex", marginTop: "3%"}}>
+        <button className="button-30" onClick={() => handleClick('gidiş')}>Gidiş</button>
+        <button className="button-30" onClick={() => handleClick('dönüş')}>Dönüş</button>
+        </div>
     </div>
   );
 };

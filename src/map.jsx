@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Tooltip} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import BusData from './AboutBus';
-import { goldIcon, blueIcon, busIcon, blackIcon} from './markers';
+import { goldIcon, redIcon, busIcon, blackIcon} from './markers';
 
 const MapComponent = (props) => {
   const [busData, setBusData] = useState([]);
@@ -196,9 +196,9 @@ const MapComponent = (props) => {
           <Marker position={busData[0]}></Marker>
       </MapContainer>
       <div className='mapButtons'>
-      <button className='mapButtonRefresh' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
-      <button className='mapButtonRemove' onClick={() => removeMap(props)}>Kaldır</button>
-      <button className='mapButtonInfo' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
+      <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
+      <button className='mapButtonRemove button-30' onClick={() => removeMap(props)}>Kaldır</button>
+      <button className='mapButtonInfo button-30' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
       </div>
       <BusData busCode = {props.code} busRota = {props.rota}/>
       </div>
@@ -224,16 +224,16 @@ const MapComponent = (props) => {
         <p style={{ color: 'black', fontWeight: "lighter", fontSize: "100%", transparent: true, fontFamily: "Russo One"}}>Buradasın</p>
             </Tooltip>
         </Marker>
-        <Marker position={busCoor[busCoor.length - 1]} icon={blueIcon}>
+        <Marker position={busCoor[busCoor.length - 1]} icon={redIcon}>
         <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-        <p style={{ color: '#00a8f1', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #0082bd, -1px 1px 0 #006694"}}>Bitiş</p>
+        <p style={{ color: '#cd3951', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #aa253b, -1px 1px 0 #aa253b"}}>Bitiş</p>
         </Tooltip>
         </Marker>
     </MapContainer>
     <div className='mapButtons'>
-    <button className='mapButtonRefresh' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
-    <button className='mapButtonRemove' onClick={() => removeMap(props)}>Kaldır</button>
-    <button className='mapButtonInfo' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
+    <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
+    <button className='mapButtonRemove button-30' onClick={() => removeMap(props)}>Kaldır</button>
+    <button className='mapButtonInfo button-30' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
     </div>
     <BusData busCode = {props.code} busRota = {props.rota}/>
     </div>
@@ -254,9 +254,9 @@ const MapComponent = (props) => {
         <p style={{ color: 'gold', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #c18103, -1px 1px 0 #c18103"}}>Başlangıç</p>
             </Tooltip>
         </Marker>
-        <Marker position={busCoor[busCoor.length - 1]} icon={blueIcon}>
+        <Marker position={busCoor[busCoor.length - 1]} icon={redIcon}>
         <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-        <p style={{ color: '#00b2ff', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #0082bd, -1px 1px 0 #006694"}}>Bitiş</p>
+        <p style={{ color: '#cd3951', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #aa253b, -1px 1px 0 #aa253b"}}>Bitiş</p>
         </Tooltip>
         </Marker>
         <Marker position={location} icon={blackIcon}>
@@ -268,9 +268,9 @@ const MapComponent = (props) => {
     </MapContainer>
 
     <div className='mapButtons'>
-    <button className='mapButtonRefresh' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
-    <button className='mapButtonRemove' onClick={() => removeMap(props)}>Kaldır</button>
-    <button className='mapButtonInfo' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
+    <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
+    <button className='mapButtonRemove button-30' onClick={() => removeMap(props)}>Kaldır</button>
+    <button className='mapButtonInfo button-30' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
     </div>
     <BusData busCode = {props.code} busRota = {props.rota}/>
     </div>
