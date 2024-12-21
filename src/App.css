@@ -139,4 +139,52 @@ input:focus {
 
     box-shadow: black 0 4px 5px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
   }
+  /* MapContainer and ButtonContainer Styling */
+.map-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  /* General Button Styling */
+  .move-btn {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .move-btn:hover {
+    background-color: #45a049;
+  }
+  
+  .move-btn:active {
+    background-color: #387f39;
+  }
+  
+  /* Up and Down Specific Styling */
+  .move-up {
+    background-color: #007BFF; /* Blue */
+  }
+  
+  .move-up:hover {
+    background-color: #0056b3;
+  }
+  
+  .move-down {
+    background-color: #FF5733; /* Red */
+  }
+  
+  .move-down:hover {
+    background-color: #c13e1a;
+  }
+  
   

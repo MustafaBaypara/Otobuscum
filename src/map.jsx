@@ -8,7 +8,6 @@ const MapComponent = (props) => {
   const [busData, setBusData] = useState([]);
   const [stationData, setstationData] = useState([]);
   const [busCoor, setBusCoor] = useState([[0, 0]]);
-  const [location, setLocation] = useState([[0, 0]]);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [lockMap, setLockMap] = useState(false);
   var timeCounter = 0;
@@ -153,20 +152,6 @@ const MapComponent = (props) => {
     stationFunc();
     }, []);
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        setLocation([latitude, longitude]);
-      },
-      (error) => {
-        setLocation([0, 0]);
-        console.error('Konum bilgisini alırken bir hata oluştu:', error);
-      }
-    );
-  }, [busData]);
-
   const handleRefreshClick = () => {
     setIsButtonDisabled(true); 
     fetchData(0);
@@ -225,11 +210,6 @@ const MapComponent = (props) => {
         <p style={{ color: 'gold', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #c18103, -1px 1px 0 #c18103"}}>Başlangıç</p>
             </Tooltip>
         </Marker>
-        <Marker position={location} icon={blackIcon}>
-        <Tooltip className="tooltipstyle" direction="bottom" offset={[1, -25]} opacity={1} permanent>
-        <p style={{ color: 'black', fontWeight: "lighter", fontSize: "100%", transparent: true, fontFamily: "Russo One"}}>Buradasın</p>
-            </Tooltip>
-        </Marker>
         <Marker position={busCoor[busCoor.length - 1]} icon={redIcon}>
         <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
         <p style={{ color: '#cd3951', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #aa253b, -1px 1px 0 #aa253b"}}>Bitiş</p>
@@ -266,11 +246,6 @@ const MapComponent = (props) => {
         <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
         <p style={{ color: '#cd3951', fontWeight: "lighter", fontSize: "150%", transparent: true, fontFamily: "Russo One", letterSpacing: "2px", textShadow: "1px 1px 0 #aa253b, -1px 1px 0 #aa253b"}}>Bitiş</p>
         </Tooltip>
-        </Marker>
-        <Marker position={location} icon={blackIcon}>
-        <Tooltip className="tooltipstyle" direction="bottom" offset={[1, -25]} opacity={1} permanent>
-        <p style={{ color: 'black', fontWeight: "lighter", fontSize: "100%", transparent: true, fontFamily: "Russo One"}}>Buradasın</p>
-            </Tooltip>
         </Marker>
       <Polyline positions={busCoor} color="black" op  weight={3} opacity={0.7} dashArray="2, 5" lineCap="round"/>
       <MapEventHandler onMoveEnd={handleMoveEnd} />
