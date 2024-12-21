@@ -51,9 +51,7 @@ const App = () => {
     }
     return (
       <div key={item.id} className="map-container">
-          <button className="move-btn move-up" onClick={() => moveUp(index)}>↑</button>
-        <MapComponent id={item.id} code={busName[0]} rota={rotaName} />
-          <button className="move-btn move-down" onClick={() => moveDown(index)}>↓</button>
+        <MapComponent id={item.id} code={busName[0]} rota={rotaName} moveup={moveUp} movedown={moveDown} index={index} />
       </div>
     );
   });
