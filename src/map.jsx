@@ -187,9 +187,11 @@ const MapComponent = (props) => {
           <Marker position={busData[0]}></Marker>
       </MapContainer>
       <div className='mapButtons'>
-      <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
-      <button className='mapButtonRemove button-30' onClick={() => removeMap(props)}>Kaldır</button>
-      <button className='mapButtonInfo button-30' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
+      <button className="move-btn move-up" onClick={() => props.moveup(props.index)}>↑</button>
+    <button className='mapButtonRefresh button-30' onClick={handleRefreshClick} disabled={isButtonDisabled}>Yenile</button>
+    <button className='mapButtonRemove button-30' onClick={() => removeMap(props)}>Kaldır</button>
+    <button className='mapButtonInfo button-30' onClick={() => InfoFunc(props.id - 1)}>Hat Bilgisi</button>
+    <button className="move-btn move-down" onClick={() => props.movedown(props.index)}>↓</button>
       </div>
       <BusData busCode = {props.code} busRota = {props.rota}/>
       </div>
