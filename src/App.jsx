@@ -11,16 +11,21 @@ const App = () => {
       localStorage.setItem('savedData', '%%490+%%490-%%305+%%305-');
     }
     const data = localStorage.getItem('savedData');
-    const localData = data ? data.split('%%').map((item, index) => ({ id: index, title: item })) : [];
+    const localData = data ? data.split('%%').map((item, index) => ({ id: index -1, title: item })) : [];
+    localData.shift();
     setLocalData(localData);
   }, []);
+  useEffect(() => {
+    updateLocalStorage(localData);
+  }, [localData]);
+  
 
   const moveUp = (index) => {
+    console.log(index);
     if (index === 0) return;
     const newData = [...localData];
     [newData[index], newData[index - 1]] = [newData[index - 1], newData[index]];
     setLocalData(newData);
-    updateLocalStorage(newData);
   };
 
   const moveDown = (index) => {
@@ -28,13 +33,17 @@ const App = () => {
     const newData = [...localData];
     [newData[index], newData[index + 1]] = [newData[index + 1], newData[index]];
     setLocalData(newData);
-    updateLocalStorage(newData);
   };
 
   const updateLocalStorage = (newData) => {
-    const dataString = newData.map(item => item.title).join('%%');
+    if (newData.length === 0) {
+      localStorage.setItem('savedData', '');
+      return;
+    }
+    const dataString = '%%' + newData.map(item => item.title).join('%%');
     localStorage.setItem('savedData', dataString);
   };
+  
 
   const dataComponents = localData.map((item, index) => {
     if (item.title === '') {
