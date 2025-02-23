@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import MapComponent from './map';
+import MapComponent from './map.jsx';
 import InputComponent from './addBus';
 import './App.css';
+import { use } from 'react';
 
 const App = () => {
   const [localData, setLocalData] = useState([]);
@@ -11,29 +12,19 @@ const App = () => {
       localStorage.setItem('savedData', '%%490+%%490-%%305+%%305-');
     }
     const data = localStorage.getItem('savedData');
-    const localData = data ? data.split('%%').map((item, index) => ({ id: index -1, title: item })) : [];
+    const localData = data ? data.split('%%').map((item, index) => ({ id: index, title: item })) : [];
+    if (!localStorage.getItem('visible')) {
+      var visibleData = localData.map(item => item.title);
+      visibleData.push('999');
+      localStorage.setItem('visible', visibleData);
+    }
     localData.shift();
     setLocalData(localData);
   }, []);
+
   useEffect(() => {
     updateLocalStorage(localData);
   }, [localData]);
-  
-
-  const moveUp = (index) => {
-    console.log(index);
-    if (index === 0) return;
-    const newData = [...localData];
-    [newData[index], newData[index - 1]] = [newData[index - 1], newData[index]];
-    setLocalData(newData);
-  };
-
-  const moveDown = (index) => {
-    if (index === localData.length - 1) return;
-    const newData = [...localData];
-    [newData[index], newData[index + 1]] = [newData[index + 1], newData[index]];
-    setLocalData(newData);
-  };
 
   const updateLocalStorage = (newData) => {
     if (newData.length === 0) {
@@ -60,7 +51,7 @@ const App = () => {
     }
     return (
       <div key={item.id} className="map-container">
-        <MapComponent id={item.id} code={busName[0]} rota={rotaName} moveup={moveUp} movedown={moveDown} index={index} />
+        <MapComponent id={item.id} code={busName[0]} rota={rotaName} index={index} />
       </div>
     );
   });
