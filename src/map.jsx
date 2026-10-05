@@ -1,444 +1,318 @@
-import React, { useCallback, useEffect, useState, useRef} from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Tooltip, useMap, useMapEvent } from 'react-leaflet';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Polyline, Tooltip, Popup, useMap, useMapEvent } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import BusData from './AboutBus';
+import AboutBus from './AboutBus';
 import { goldIcon, redIcon, busIcon } from './markers';
+import { fetchBusesOnRoute, fetchRouteCoordinates, fetchRouteDirections } from './ekomobilApi';
 
-const MapComponent = (props) => {
-  const [busData, setBusData] = useState([]);
-  const [stationData, setStationData] = useState([]);
-  const [busCoor, setBusCoor] = useState([[0, 0]]);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+const DEFAULT_CENTER = [40.7654, 29.9408]; // Kocaeli
+
+const FitBounds = ({ bounds, lock }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!lock && bounds && bounds.length > 1) {
+      try {
+        map.fitBounds(bounds, { padding: [25, 25] });
+      } catch (err) {
+        console.warn('fitBounds error:', err);
+      }
+    }
+  }, [bounds, lock, map]);
+  return null;
+};
+
+const MapEventHandler = ({ onMoveEnd }) => {
+  useMapEvent('movestart', onMoveEnd);
+  return null;
+};
+
+const MapComponent = ({ id, code, rota, isFirst, isLast, onRemove, onMoveUp, onMoveDown }) => {
+  const [buses, setBuses] = useState([]);
+  const [routeCoords, setRouteCoords] = useState([]);
+  const [directionTitle, setDirectionTitle] = useState('');
+  const [isLoadingBuses, setIsLoadingBuses] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
   const [lockMap, setLockMap] = useState(false);
-  const [isShow, setIsShow] = useState(localStorage.getItem('visible').split(',').includes(props.code + (props.rota === 0 ? '+' : '-')) ? 'block' : 'none');
+  const [showInfo, setShowInfo] = useState(false);
 
-  let timeCounter = 0;
-  let stationCounter = 2000;
-  let polylineCounter = 2000;
-  const mapRef = useRef();
+  const routeKey = `${code}${rota === 0 ? '+' : '-'}`;
+  const [isVisible, setIsVisible] = useState(() => {
+    const savedVisible = localStorage.getItem('visible') || '';
+    return savedVisible.split(',').map((s) => s.trim()).includes(routeKey);
+  });
 
-  const HeaderMap = () => {
-    return props.rota === 0 ? `${props.code} Gidiş` : `${props.code} Dönüş`;
+  const mapRef = useRef(null);
+
+  const getHeaderTitle = () => {
+    return rota === 0 ? `${code} Gidiş` : `${code} Dönüş`;
   };
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Fetch route direction name (e.g. "MUALLİMKÖY > GEBZE > GTÜ")
+  useEffect(() => {
+    let isMounted = true;
+    fetchRouteDirections(code)
+      .then((dirs) => {
+        if (isMounted) {
+          setDirectionTitle(rota === 0 ? dirs.direct0 : dirs.direct1);
+        }
+      })
+      .catch((err) => console.warn('Direction fetch error:', err));
 
-  const InfoFunc = (id) => {
-    const element = document.getElementsByClassName('BusData')[id];
-    if (element) {
-      element.style.display = element.style.display === 'block' ? 'none' : 'block';
-    }
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [code, rota]);
 
-  const removeMap = () => {
-    const element = document.getElementById(props.id);
-    if (element && element.className === 'mapClass') {
-      const rotaSymbol = props.rota === 0 ? '+' : '-';
-      const updatedData = localStorage.getItem('savedData').replace(`%%${props.code}${rotaSymbol}`, '');
-      localStorage.setItem('savedData', updatedData);
-      element.remove();
-    }
-  };
+  // Fetch route polyline coordinates
+  useEffect(() => {
+    let isMounted = true;
+    fetchRouteCoordinates(code, rota)
+      .then((coords) => {
+        if (isMounted && coords.length > 0) {
+          setRouteCoords(coords);
+        }
+      })
+      .catch((err) => console.warn('Route coordinates fetch error:', err));
 
-// Yukarı taşıma fonksiyonu
-const moveUp = () => {
-  const currentElement = document.getElementById(props.id);
-  if (!currentElement) {
-    console.log("Current element bulunamadı:", props.id);
-    return;
-  }
+    return () => {
+      isMounted = false;
+    };
+  }, [code, rota]);
 
-  const parent = currentElement.parentElement.parentElement; // map-container'ın parent'ına ulaş
-  const currentContainer = currentElement.parentElement; // Mevcut map-container
-  const previousContainer = currentContainer.previousElementSibling;
-
-  if (!previousContainer || !previousContainer.querySelector('.mapClass')) {
-    console.log("Önceki eleman yok veya mapClass değil");
-    return;
-  }
-
-  // HTML'de yer değiştirme (map-container seviyesinde)
-  parent.insertBefore(currentContainer, previousContainer);
-
-  // localStorage'da yer değiştirme
-  const rotaSymbol = props.rota === 0 ? '+' : '-';
-  const currentItem = `${props.code}${rotaSymbol}`;
-  let savedData = localStorage.getItem('savedData');
-  const dataArray = savedData.split('%%').filter(Boolean); // Boş elemanları temizle
-  const currentIndex = dataArray.indexOf(currentItem);
-
-  if (currentIndex === 0) return; // İlk eleman zaten en üstteyse çık
-
-  // Dizide yer değiştirme
-  [dataArray[currentIndex - 1], dataArray[currentIndex]] = [
-    dataArray[currentIndex],
-    dataArray[currentIndex - 1],
-  ];
-
-  // Güncellenmiş veriyi localStorage'a kaydet
-  localStorage.setItem('savedData', '%%' + dataArray.join('%%'));
-};
-
-// Aşağı taşıma fonksiyonu
-const moveDown = () => {
-  const currentElement = document.getElementById(props.id);
-  if (!currentElement) {
-    console.log("Current element bulunamadı:", props.id);
-    return;
-  }
-
-  const parent = currentElement.parentElement.parentElement; // map-container'ın parent'ına ulaş
-  const currentContainer = currentElement.parentElement; // Mevcut map-container
-  const nextContainer = currentContainer.nextElementSibling;
-
-  if (!nextContainer || !nextContainer.querySelector('.mapClass')) {
-    console.log("Sonraki eleman yok veya mapClass değil");
-    return;
-  }
-
-  // HTML'de yer değiştirme (map-container seviyesinde)
-  parent.insertBefore(nextContainer, currentContainer);
-
-  // localStorage'da yer değiştirme
-  const rotaSymbol = props.rota === 0 ? '+' : '-';
-  const currentItem = `${props.code}${rotaSymbol}`;
-  let savedData = localStorage.getItem('savedData');
-  const dataArray = savedData.split('%%').filter(Boolean); // Boş elemanları temizle
-  const currentIndex = dataArray.indexOf(currentItem);
-
-  if (currentIndex === dataArray.length - 1) return; // Son eleman zaten en alttaysa çık
-
-  // Dizide yer değiştirme
-  [dataArray[currentIndex], dataArray[currentIndex + 1]] = [
-    dataArray[currentIndex + 1],
-    dataArray[currentIndex],
-  ];
-
-  // Güncellenmiş veriyi localStorage'a kaydet
-  localStorage.setItem('savedData', '%%' + dataArray.join('%%'));
-};
-
-  const fetchData = useCallback(async (code) => {
-    try {
-      const response = await fetch(
-        `https://e-komobil.com/yolcu_bilgilendirme_operations.php?cmd=searchBusesontheRoute&route_code=${props.code}&direction=${props.rota}`
-      );
-      if (!response.ok) throw new Error('Veri alınamadı');
-      const textData = await response.text();
-      const parser = new DOMParser();
-      const html = parser.parseFromString(textData, 'text/html');
-      const data = Array.from(html.querySelectorAll('li input')).map((input) =>
-        input.value.split('+').map(parseFloat)
-      );
-
-      if (code === 0) {
-        setIsButtonDisabled(true);
-        setTimeout(() => setIsButtonDisabled(false), 1000);
-        if (data.length === 0) return;
-        timeCounter = 0;
-        setBusData(data);
-        return;
-      }
-
-      if (data.length === 0) {
-        timeCounter += 5000;
-        await wait(5000 + timeCounter);
-        fetchData();
+  // Poll buses live location
+  const loadBuses = useCallback(
+    async (isManualRefresh = false) => {
+      if (isManualRefresh) {
+        setIsRefreshing(true);
       } else {
-        timeCounter = 0;
-        setBusData(data);
-        await wait(5000);
-        fetchData();
+        setIsLoadingBuses(true);
       }
-    } catch (error) {
-      console.error('Hata:', error);
-    }
-  }, [props.code, props.rota]);
 
-  const polylinePositions = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `https://www.e-komobil.com/yolcu_bilgilendirme_operations.php?cmd=searchRouteCoordPoint&route_code=${props.code}&direction=${props.rota}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-          body: `cmd=searchRouteCoordPoints&route_code=${props.code}&direction=${props.rota}`,
+      try {
+        const busList = await fetchBusesOnRoute(code, rota);
+        setBuses(busList);
+        setFetchError(null);
+      } catch (err) {
+        console.error(`Error fetching buses for ${code}:`, err);
+        setFetchError(err.message || 'Konum alınamadı');
+      } finally {
+        setIsLoadingBuses(false);
+        if (isManualRefresh) {
+          setTimeout(() => setIsRefreshing(false), 800);
         }
-      );
-
-      if (!response.ok) throw new Error('Network response was not ok');
-      const result = await response.json();
-      if (result.length === 0) {
-        polylineCounter *= 2;
-        await wait(1000 + polylineCounter);
-        polylinePositions();
-        return;
       }
-      const resultArray = result.map((item) => [parseFloat(item.Latitude), parseFloat(item.Longitude)]);
-      setBusCoor(resultArray);
-    } catch (error) {
-      console.log(error.message);
-    }
-  }, [props.code, props.rota]);
-
-  const stationFunc = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `https://www.e-komobil.com/yolcu_bilgilendirme_operations.php?cmd=searchRouteDirections&route_code=${props.code}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-          body: `route_code=${props.code}`,
-        }
-      );
-
-      if (!response.ok) throw new Error('Network response was not ok');
-      let result = await response.json();
-      if (result.length === 0 || result['direct0'] === 'Gidiş Yönü') {
-        stationCounter *= 2;
-        await wait(1000 + stationCounter);
-        stationFunc();
-        return;
-      }
-      stationCounter = 0;
-      result = JSON.stringify(result).replace(/-/g, '>');
-      result = JSON.parse(result);
-      setStationData(result[`direct${props.rota}`]);
-    } catch (error) {
-      console.log(error.message);
-    }
-  }, [props.code, props.rota]);
+    },
+    [code, rota]
+  );
 
   useEffect(() => {
-    fetchData();
-    polylinePositions();
-    stationFunc();
-  }, [fetchData, polylinePositions, stationFunc]);
+    let isMounted = true;
 
-  const handleRefreshClick = () => {
-    setIsButtonDisabled(true);
-    fetchData(0);
-    setTimeout(() => setIsButtonDisabled(false), 3000);
-  };
+    const runFetch = async () => {
+      if (!isMounted) return;
+      await loadBuses(false);
+    };
 
-  const MapEventHandler = ({ onMoveEnd }) => {
-    useMapEvent('movestart', onMoveEnd);
-    return null;
-  };
+    runFetch();
 
-  const FitBounds = ({ bounds, lock }) => {
-    const map = useMap();
-    if (!lock) map.fitBounds(bounds);
-    return null;
-  };
+    // Poll every 6 seconds
+    const intervalId = setInterval(runFetch, 6000);
 
-  const handleMoveEnd = () => {
-    setLockMap(true);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [loadBuses]);
+
+  const handleManualRefresh = () => {
+    if (isRefreshing) return;
+    loadBuses(true);
   };
 
   const toggleVisibility = () => {
-    var visible = localStorage.getItem('visible').split(',');
-    visible = visible.map((item) => item.trim());
-  
-    const newVisibility = isShow === 'block' ? 'none' : 'block';
-    setIsShow(newVisibility);
-  
-    if (newVisibility === 'block') {
-      if (!visible.includes(props.code + (props.rota === 0 ? '+' : '-'))) {
-        visible.push(props.code + (props.rota === 0 ? '+' : '-'));
-        localStorage.setItem('visible', visible);
-      }
-  
+    const nextState = !isVisible;
+    setIsVisible(nextState);
+
+    const savedVisible = (localStorage.getItem('visible') || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    let updatedVisible;
+    if (nextState) {
+      updatedVisible = Array.from(new Set([...savedVisible, routeKey]));
+    } else {
+      updatedVisible = savedVisible.filter((k) => k !== routeKey);
+    }
+    localStorage.setItem('visible', updatedVisible.join(','));
+
+    if (nextState) {
       setTimeout(() => {
         const map = mapRef.current;
         if (map) {
           map.invalidateSize();
-          if (busCoor.length > 0) {
-            map.fitBounds([busCoor[0], busCoor[busCoor.length - 1]]);
+          if (routeCoords.length > 1) {
+            map.fitBounds([routeCoords[0], routeCoords[routeCoords.length - 1]]);
           }
         }
-      }, 300); // Harita görünür hale geldikten sonra zaman tanımak için
-    } else {
-      if (visible.includes(props.code + (props.rota === 0 ? '+' : '-'))) {
-        visible = visible.filter((item) => item !== props.code + (props.rota === 0 ? '+' : '-'));
-        localStorage.setItem('visible', visible);
-      }
+      }, 250);
     }
   };
-  
-  if (busData.length === 0) {
-    return (
-      <div className="mapClass" id={props.id} >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{margin: 'auto'}} >{HeaderMap()}</h2>
-        <button className="toggle-btn" onClick={toggleVisibility} style={{margin: '10px', marginLeft: 'auto'}}>
-          {isShow === 'none' ? 'Göster' : 'Gizle'}
-        </button>
-        </div>
-        <h3>{stationData}</h3>
-        <div className="overlay-text">
-          <p>Otobüs Çevrimdışı</p>
-        </div>
-        <div className="mapContent" id={props.id + "mapContent"} style={{ display: isShow}}>
-        <MapContainer ref={mapRef} style={{ height: '100px', width: '400px', zIndex: '0' }} attributionControl={false}>
-          <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <Marker position={busData[0] || [0, 0]}></Marker>
-        {busCoor.length > 1 && <FitBounds bounds={[busCoor[0], busCoor[busCoor.length - 1]]} lock={lockMap} />}
-        </MapContainer>
-        <div className="mapButtons" >
-          <button className="move-btn move-up" onClick={moveUp}>↑</button>
-          <button className="mapButtonRefresh button-30" onClick={handleRefreshClick} disabled={isButtonDisabled}>
-            Yenile
-          </button>
-          <button className="mapButtonRemove button-30" onClick={removeMap}>
-            Kaldır
-          </button>
-          <button className="mapButtonInfo button-30" onClick={() => InfoFunc(props.id - 1)}>
-            Hat Bilgisi
-          </button>
-          <button className="move-btn move-down" onClick={moveDown}>↓</button>
-        </div>
-        <BusData busCode={props.code} busRota={props.rota} />
-      </div>
-      </div>
-    );
-  }
 
-  if (busData.length === 1) {
-    return (
-      <div className="mapClass" id={props.id}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{margin: 'auto'}} >{HeaderMap()}</h2>
-        <button className="toggle-btn" onClick={toggleVisibility} style={{margin: '10px', marginLeft: 'auto'}}>
-          {isShow === 'none' ? 'Göster' : 'Gizle'}
-        </button>
-        </div>
-        <h3>{stationData}</h3>
-        <div className="mapContent" id={props.id + "mapContent"} style={{ display: isShow}}>
-        <MapContainer ref={mapRef} style={{ height: '400px', width: '400px', zIndex: '0' }} attributionControl={false}>
-          <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          <Marker position={busData[0]} icon={busIcon}></Marker>
-          <Polyline positions={busCoor} color="black" weight={3} opacity={0.7} dashArray="2, 5" lineCap="round" />
-          <Marker position={busCoor[0]} icon={goldIcon}>
-            <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-              <p
-                style={{
-                  color: 'gold',
-                  fontWeight: 'lighter',
-                  fontSize: '150%',
-                  fontFamily: 'Russo One',
-                  letterSpacing: '2px',
-                  textShadow: '1px 1px 0 #c18103, -1px 1px 0rgb(78, 75, 67)',
-                }}
-              >
-                Başlangıç
-              </p>
-            </Tooltip>
-          </Marker>
-          <Marker position={busCoor[busCoor.length - 1]} icon={redIcon}>
-            <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-              <p
-                style={{
-                  color: '#cd3951',
-                  fontWeight: 'lighter',
-                  fontSize: '150%',
-                  fontFamily: 'Russo One',
-                  letterSpacing: '2px',
-                  textShadow: '1px 1px 0 #aa253b, -1px 1px 0 #aa253b',
-                }}
-              >
-                Bitiş
-              </p>
-            </Tooltip>
-          </Marker>
-          <MapEventHandler onMoveEnd={handleMoveEnd} />
-          {busCoor.length > 1 && <FitBounds bounds={[busCoor[0], busCoor[busCoor.length - 1]]} lock={lockMap} />}
-        </MapContainer>
-        <div className="mapButtons">
-          <button className="move-btn move-up" onClick={moveUp}>↑</button>
-          <button className="mapButtonRefresh button-30" onClick={handleRefreshClick} disabled={isButtonDisabled}>
-            Yenile
-          </button>
-          <button className="mapButtonRemove button-30" onClick={removeMap}>
-            Kaldır
-          </button>
-          <button className="mapButtonInfo button-30" onClick={() => InfoFunc(props.id - 1)}>
-            Hat Bilgisi
-          </button>
-          <button className="move-btn move-down" onClick={moveDown}>↓</button>
-        </div>
-        <BusData busCode={props.code} busRota={props.rota} />
-      </div>
-      </div>
-    );
-  }
+  const initialBounds =
+    routeCoords.length > 1
+      ? [routeCoords[0], routeCoords[routeCoords.length - 1]]
+      : buses.length > 0
+      ? [buses[0].position, buses[0].position]
+      : null;
 
   return (
-    <div className="mapClass" id={props.id}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{margin: 'auto'}} >{HeaderMap()}</h2>
-        <button className="toggle-btn" onClick={toggleVisibility} style={{margin: '10px', marginLeft: 'auto'}}>
-          {isShow === 'none' ? 'Göster' : 'Gizle'}
+    <div className="mapClass" id={`map-${id}`}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 12px' }}>
+        <h2 style={{ margin: 'auto', fontSize: '1.25rem' }}>{getHeaderTitle()}</h2>
+        <button
+          className="button-30 toggle-btn"
+          onClick={toggleVisibility}
+          style={{ marginLeft: 'auto', fontSize: '13px', height: '28px' }}
+        >
+          {isVisible ? 'Gizle' : 'Göster'}
         </button>
-        </div>
-      <h3>{stationData}</h3>
-      <div className="mapContent" id={props.id + "mapContent"} style={{ display: isShow}}>
-      <MapContainer ref={mapRef} style={{ height: '400px', width: '400px', zIndex: '0' }} attributionControl={false}>
-        <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {busData.map((position, index) => (
-          <Marker key={index} position={position} icon={busIcon}></Marker>
-        ))}
-        <Marker position={busCoor[0]} icon={goldIcon}>
-          <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-            <p
-              style={{
-                color: 'gold',
-                fontWeight: 'lighter',
-                fontSize: '150%',
-                fontFamily: 'Russo One',
-                letterSpacing: '2px',
-                textShadow: '1px 1px 0 #c18103, -1px 1px 0 #c18103',
-              }}
-            >
-              Başlangıç
-            </p>
-          </Tooltip>
-        </Marker>
-        <Marker position={busCoor[busCoor.length - 1]} icon={redIcon}>
-          <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
-            <p
-              style={{
-                color: '#cd3951',
-                fontWeight: 'lighter',
-                fontSize: '150%',
-                fontFamily: 'Russo One',
-                letterSpacing: '2px',
-                textShadow: '1px 1px 0 #aa253b, -1px 1px 0 #aa253b',
-              }}
-            >
-              Bitiş
-            </p>
-          </Tooltip>
-        </Marker>
-        <Polyline positions={busCoor} color="black" weight={3} opacity={0.7} dashArray="2, 5" lineCap="round" />
-        <MapEventHandler onMoveEnd={handleMoveEnd} />
-        {busCoor.length > 1 && <FitBounds bounds={[busCoor[0], busCoor[busCoor.length - 1]]} lock={lockMap} />}
-      </MapContainer>
-      <div className="mapButtons">
-        <button className="move-btn move-up" onClick={moveUp}>↑</button>
-        <button className="mapButtonRefresh button-30" onClick={handleRefreshClick} disabled={isButtonDisabled}>
-          Yenile
-        </button>
-        <button className="mapButtonRemove button-30" onClick={removeMap}>
-          Kaldır
-        </button>
-        <button className="mapButtonInfo button-30" onClick={() => InfoFunc(props.id - 1)}>
-          Hat Bilgisi
-        </button>
-        <button className="move-btn move-down" onClick={moveDown}>↓</button>
       </div>
-      <BusData busCode={props.code} busRota={props.rota} />
-    </div>
+
+      {directionTitle && (
+        <h3 style={{ padding: '0 8px', color: '#333', fontSize: '0.85rem' }}>{directionTitle}</h3>
+      )}
+
+      {/* Offline notice when visible and no buses */}
+      {buses.length === 0 && (
+        <div className="overlay-text" style={{ margin: '6px auto', width: '90%', padding: '6px', borderRadius: '4px' }}>
+          <p style={{ margin: 0, fontWeight: 'bold' }}>
+            {isLoadingBuses ? 'Otobüsler Aranıyor...' : 'Otobüs Çevrimdışı / Seferde Araç Yok'}
+          </p>
+          {fetchError && <p style={{ fontSize: '75%', margin: '4px 0 0' }}>{fetchError}</p>}
+        </div>
+      )}
+
+      {isVisible && (
+        <div className="mapContent" id={`mapContent-${id}`} style={{ display: 'block' }}>
+          <div style={{ height: '360px', width: '100%', position: 'relative' }}>
+            <MapContainer
+              ref={mapRef}
+              center={buses[0]?.position || routeCoords[0] || DEFAULT_CENTER}
+              zoom={13}
+              style={{ height: '100%', width: '100%', zIndex: 0 }}
+              attributionControl={false}
+            >
+              <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+              {/* Live bus markers with plate numbers */}
+              {buses.map((bus, bIdx) => (
+                <Marker key={`bus-${bIdx}`} position={bus.position} icon={busIcon}>
+                  <Tooltip direction="top" offset={[0, -25]} opacity={0.95} permanent>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'sans-serif' }}>
+                      {bus.plate || `${code} Otobüs`}
+                    </span>
+                  </Tooltip>
+                  <Popup>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '13px' }}>
+                      <strong>Hat:</strong> {code} ({rota === 0 ? 'Gidiş' : 'Dönüş'})<br />
+                      <strong>Plaka:</strong> {bus.plate || 'Bilinmiyor'}<br />
+                      <strong>Konum:</strong> {bus.lat.toFixed(5)}, {bus.lng.toFixed(5)}
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+
+              {/* Route polyline and start / end endpoints */}
+              {routeCoords.length > 0 && (
+                <>
+                  <Polyline
+                    positions={routeCoords}
+                    color="#2b6cb0"
+                    weight={4}
+                    opacity={0.75}
+                    dashArray="4, 6"
+                    lineCap="round"
+                  />
+                  <Marker position={routeCoords[0]} icon={goldIcon}>
+                    <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
+                      <p
+                        style={{
+                          color: '#b7791f',
+                          fontWeight: 'bold',
+                          fontSize: '120%',
+                          fontFamily: 'Russo One',
+                          margin: 0,
+                        }}
+                      >
+                        Başlangıç
+                      </p>
+                    </Tooltip>
+                  </Marker>
+                  <Marker position={routeCoords[routeCoords.length - 1]} icon={redIcon}>
+                    <Tooltip className="tooltipstyle" direction="top" offset={[1, -25]} opacity={1} permanent>
+                      <p
+                        style={{
+                          color: '#c53030',
+                          fontWeight: 'bold',
+                          fontSize: '120%',
+                          fontFamily: 'Russo One',
+                          margin: 0,
+                        }}
+                      >
+                        Bitiş
+                      </p>
+                    </Tooltip>
+                  </Marker>
+                </>
+              )}
+
+              <MapEventHandler onMoveEnd={() => setLockMap(true)} />
+              {initialBounds && <FitBounds bounds={initialBounds} lock={lockMap} />}
+            </MapContainer>
+          </div>
+
+          <div className="mapButtons">
+            <button
+              className="move-btn move-up"
+              onClick={onMoveUp}
+              disabled={isFirst}
+              style={{ opacity: isFirst ? 0.35 : 1, cursor: isFirst ? 'not-allowed' : 'pointer' }}
+              title="Yukarı Taşı"
+            >
+              ↑
+            </button>
+            <button
+              className="mapButtonRefresh button-30"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? 'Yenileniyor...' : 'Yenile'}
+            </button>
+            <button className="mapButtonRemove button-30" onClick={onRemove}>
+              Kaldır
+            </button>
+            <button
+              className="mapButtonInfo button-30"
+              onClick={() => setShowInfo((prev) => !prev)}
+            >
+              {showInfo ? 'Kapat' : 'Hat Bilgisi'}
+            </button>
+            <button
+              className="move-btn move-down"
+              onClick={onMoveDown}
+              disabled={isLast}
+              style={{ opacity: isLast ? 0.35 : 1, cursor: isLast ? 'not-allowed' : 'pointer' }}
+              title="Aşağı Taşı"
+            >
+              ↓
+            </button>
+          </div>
+
+          <AboutBus busCode={code} busRota={rota} isVisible={showInfo} />
+        </div>
+      )}
     </div>
   );
 };

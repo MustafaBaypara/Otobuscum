@@ -1,3 +1,5 @@
+import L from 'leaflet';
+
 var busIcon = new L.Icon({
   iconUrl: './busmarker.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',

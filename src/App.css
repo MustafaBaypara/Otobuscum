@@ -1,114 +1,138 @@
 body {
-    font-family: "Russo One", sans-serif;
+  font-family: "Russo One", sans-serif;
+  background-color: #f7f9fa;
+  margin: 0;
+  padding: 0 10px;
 }
-.inputDiv {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 5%;
-    margin-bottom: 5%;
-}
-.inputDiv button {
-    margin-top: 5px;
-    width: 70px;
-}
-.overlay-text {
-    position: relative;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(255, 0, 0, 0.5);
-    color: white;
-    font-size: 18px;
-    z-index: 100;
-}
-  
-.mapButtons {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 2%;
-    margin-bottom: 2%;
-}
-.mapButtonInfo {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    color: #007e7e;
 
+.inputDiv {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+  margin-bottom: 25px;
 }
-.mapButtonRemove {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    color: #b60000;
+
+.inputDiv h1 {
+  margin-bottom: 12px;
+  font-size: 2rem;
+  color: #1a202c;
 }
-.mapButtonRefresh {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    color: #717171;
+
+.overlay-text {
+  background-color: rgba(220, 38, 38, 0.85);
+  color: white;
+  font-size: 14px;
+  padding: 8px 12px;
+  text-align: center;
 }
+
+.map-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .mapClass {
-    text-align: center;
-    width: 400px;
-    border: 1px solid black;
-    box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
+  text-align: center;
+  width: 440px;
+  max-width: 95vw;
+  margin-bottom: 20px;
+  border: 1px solid #1a202c;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  box-shadow: rgba(45, 35, 66, 0.3) 0 4px 10px, rgba(45, 35, 66, 0.2) 0 8px 20px -3px, #D6D6E7 0 -3px 0 inset;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.mapClass h2 {
+  font-size: 1.25rem;
+  color: #1a202c;
+  margin: 0;
+}
+
 .mapClass h3 {
-    font-weight: lighter;
-    font-size: medium;
-    margin-top: 10px;
-    margin-bottom: 10px;
+  font-weight: normal;
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin: 6px 0 10px 0;
+  line-height: 1.4;
 }
-.mainMap{
-    align-items: center;
-    justify-content: center;
-    display: grid;
-    gap: 10px;
+
+.mapButtons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 6px;
+  flex-wrap: wrap;
 }
+
+.mapButtonInfo {
+  color: #007e7e;
+}
+
+.mapButtonRemove {
+  color: #b60000;
+}
+
+.mapButtonRefresh {
+  color: #4a5568;
+}
+
+.mainMap {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
 button {
-    font-family: "Russo One", sans-serif;
-    background-color: white;
+  font-family: "Russo One", sans-serif;
+  background-color: white;
 }
+
 input {
-    background-color: white;
+  background-color: white;
 }
+
 .tooltipstyle {
-    background: none;
-    border: none;
-    box-shadow: none;
+  background: none;
+  border: none;
+  box-shadow: none;
 }
 
 .button-30 {
   align-items: center;
   appearance: none;
   background-color: #FCFCFD;
-  border: 1px solid black;
-  border-radius: 4px;
-  border-width: 1px;
-  box-shadow: rgba(45, 35, 66, 0.4) 0 2px 4px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
+  border: 1px solid #1a202c;
+  border-radius: 6px;
+  box-shadow: rgba(45, 35, 66, 0.3) 0 2px 4px, rgba(45, 35, 66, 0.2) 0 7px 13px -3px, #D6D6E7 0 -2px 0 inset;
   box-sizing: border-box;
   color: black;
   cursor: pointer;
   display: inline-flex;
   font-family: "Russo One", sans-serif;
-  height: 32px;
+  height: 34px;
   justify-content: center;
   line-height: 1;
-  list-style: none;
   overflow: hidden;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding: 0 12px;
   position: relative;
-  text-align: left;
+  text-align: center;
   text-decoration: none;
-  transition: box-shadow .15s,transform .15s;
+  transition: box-shadow .15s, transform .15s;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
   white-space: nowrap;
-  will-change: box-shadow,transform;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .button-30:focus {
@@ -126,63 +150,72 @@ input {
 }
 
 input {
-    font-family: "Russo One", sans-serif;
-    max-width: 190px;
-    padding: 0.875rem;
-    font-size: 1rem;
-    border: 1.5px solid #000;
-    border-radius: 0.5rem;
-    outline: none;
-    transition: ease 0.25s;
-    box-shadow: black 0 1px 3px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
-  }
-  
-input:focus {
+  font-family: "Russo One", sans-serif;
+  max-width: 280px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1.5px solid #000;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: ease 0.25s;
+  box-shadow: black 0 1px 3px, rgba(45, 35, 66, 0.2) 0 5px 10px -3px, #D6D6E7 0 -2px 0 inset;
+}
 
-    box-shadow: black 0 4px 5px,rgba(45, 35, 66, 0.3) 0 7px 13px -3px,#D6D6E7 0 -3px 0 inset;
-  }
-  /* MapContainer and ButtonContainer Styling */
-  
-  /* General Button Styling */
-  .move-btn {
-    background-color: #4CAF50; /* Green */
-    border: none;
-    color: white;
-    padding: 10px 15px;
-    text-align: center;
-    margin-left: 5px;
-    margin-right: 5px;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .move-btn:hover {
-    background-color: #45a049;
-  }
-  
-  .move-btn:active {
-    background-color: #387f39;
-  }
-  
-  /* Up and Down Specific Styling */
-  .move-up {
-    background-color: #007BFF; /* Blue */
-  }
-  
-  .move-up:hover {
-    background-color: #0056b3;
-  }
-  
-  .move-down {
-    background-color: #FF5733; /* Red */
-  }
-  
-  .move-down:hover {
-    background-color: #c13e1a;
-  }
-  
-  
+input:focus {
+  box-shadow: black 0 3px 6px, rgba(45, 35, 66, 0.3) 0 7px 13px -3px, #D6D6E7 0 -3px 0 inset;
+}
+
+/* General Button Styling for up/down */
+.move-btn {
+  border: 1px solid #1a202c;
+  color: white;
+  padding: 6px 12px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  height: 34px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: rgba(45, 35, 66, 0.3) 0 2px 4px;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.move-up {
+  background-color: #2b6cb0;
+}
+
+.move-up:hover:not(:disabled) {
+  background-color: #2c5282;
+  transform: translateY(-2px);
+}
+
+.move-down {
+  background-color: #dd6b20;
+}
+
+.move-down:hover:not(:disabled) {
+  background-color: #c05621;
+  transform: translateY(-2px);
+}
+
+/* Schedule table embedded styling */
+.schedule-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.schedule-container th,
+.schedule-container td {
+  border: 1px solid #cbd5e0;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.schedule-container thead {
+  background-color: #edf2f7;
+  font-weight: bold;
+}

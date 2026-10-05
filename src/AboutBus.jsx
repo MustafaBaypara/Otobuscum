@@ -1,51 +1,72 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchRouteSchedule } from './ekomobilApi';
 
-const App = (props) => {
+const AboutBus = ({ busCode, busRota, isVisible }) => {
   const [htmlContent, setHtmlContent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchData = (async () => {
+    // Only fetch schedule once when the user opens it or when props change
+    if (!isVisible) return;
+    if (hasLoaded && htmlContent) return;
+
+    let isMounted = true;
+    const loadSchedule = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('https://www.e-komobil.com/yolcu_bilgilendirme_operations.php?cmd=searchRouteSchedule&route_code=' + props.busCode +'&direction=' + props.busRota, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-          },
-          body: 'route_code=' + props.busCode +'&direction=' + props.busRota
-        });
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
+        const scheduleHtml = await fetchRouteSchedule(busCode, busRota);
+        if (isMounted) {
+          setHtmlContent(scheduleHtml);
+          setHasLoaded(true);
         }
-
-        const result = await response.text();
-        setHtmlContent(result);
-      } catch (error) {
-        setError(error.message);
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Tarife bilgisi alınamadı');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    });
+    };
 
-    fetchData();
-  }, []);
+    loadSchedule();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    return () => {
+      isMounted = false;
+    };
+  }, [busCode, busRota, isVisible, hasLoaded, htmlContent]);
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (!isVisible) {
+    return null;
   }
 
   return (
-    <div className='BusData' style={{display: "none"}}>
-      <h1>Hat Hakkında:</h1>
-      <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+    <div className="BusData" style={{ display: 'block', padding: '10px', textAlign: 'left' }}>
+      <h3 style={{ borderBottom: '2px solid #007e7e', paddingBottom: '6px', margin: '10px 0' }}>
+        {busCode} {busRota === 0 ? 'Gidiş' : 'Dönüş'} Sefer Saatleri & Bilgi:
+      </h3>
+
+      {loading && <div style={{ textAlign: 'center', padding: '15px' }}>Yükleniyor...</div>}
+
+      {error && (
+        <div style={{ color: '#b60000', padding: '10px', textAlign: 'center' }}>
+          Bilgi yüklenemedi: {error}
+        </div>
+      )}
+
+      {!loading && htmlContent && (
+        <div
+          className="schedule-container"
+          style={{ maxHeight: '350px', overflowY: 'auto', fontSize: '13px' }}
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+        />
+      )}
     </div>
   );
 };
 
-export default App;
+export default AboutBus;
