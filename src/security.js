@@ -39,9 +39,13 @@ export function getApiBaseUrl() {
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' || import.meta.env.DEV) {
       return '/ekomobil-api';
     }
-    // If a custom proxy is provided in localStorage or window
+    // If a custom proxy is provided in window or localStorage
     if (window.EKOMOBIL_PROXY_URL) {
-      return window.EKOMOBIL_PROXY_URL;
+      return window.EKOMOBIL_PROXY_URL.replace(/\/$/, '');
+    }
+    const savedProxy = localStorage.getItem('EKOMOBIL_PROXY_URL') || localStorage.getItem('proxyUrl');
+    if (savedProxy) {
+      return savedProxy.replace(/\/$/, '');
     }
   }
   return 'https://e-komobil.com';

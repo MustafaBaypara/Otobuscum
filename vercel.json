@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/ekomobil-api/(.*)",
+      "destination": "https://e-komobil.com/$1"
+    }
+  ]
+}
